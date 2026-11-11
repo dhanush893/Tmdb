@@ -70,6 +70,33 @@ Save the file, then start the bot:
 
 Open your bot in Telegram, press Start, and send a movie title.
 
+
+## Deploy on Render
+
+This repository is configured for a Render **Web Service** using Telegram webhooks. This avoids needing a paid background worker.
+
+1. Push the repository to GitHub (the Render blueprint file is `render.yaml`).
+2. Open https://render.com/ and sign in with GitHub.
+3. Choose **New +** → **Blueprint** and select `dhanush893/Tmdb`.
+4. Review the service named `tmdb-movie-info-bot` and deploy it.
+5. In the service's **Environment** settings, add these secret values:
+   - `TELEGRAM_BOT_TOKEN` — token from @BotFather.
+   - `TMDB_API_KEY` — your TMDB API key.
+   - `TELEGRAM_WEBHOOK_SECRET` — a random 32+ character string using only letters, numbers, underscores, and hyphens.
+   - `OMDB_API_KEY` — optional.
+6. Save changes and let Render redeploy. Check **Logs** for the startup message.
+7. Open the Telegram bot privately and send a movie title.
+
+Render sets `RENDER_EXTERNAL_URL` and `PORT` for the Web Service. The app uses these to register the Telegram webhook. Do not set `TELEGRAM_MODE` to polling on Render.
+
+Generate a webhook secret locally in Termux without sharing it:
+
+    python -c "import secrets; print(secrets.token_urlsafe(32))"
+
+Paste the generated value directly into Render's Environment settings. Never put real tokens or secrets in GitHub.
+
+**Free-plan note:** Render free web services can spin down after inactivity. The first Telegram message after a spin-down may take longer while the service wakes up. Check Render's current plan limits before deploying.
+
 ## API behaviour
 
 - TMDB supplies movie search results, genres, release date, runtime, original language, rating, and poster.
