@@ -18,6 +18,8 @@ Example reply:
 - Discover this week's trending movies with /trending.
 - Movie and series posters, ratings, genres, release information, and story summaries.
 - Interactive Cast & Crew, Trailer, and Similar Titles buttons.
+- `/settings` menu for cinematic backdrop/original poster style and 5, 8, or 10 search results.
+- Wide cinematic backdrop images by default, with poster fallback when a backdrop is unavailable.
 - Optional IMDb rating data through OMDb.
 - Converts 10-point provider ratings to a 5-point display.
 - Private-chat-only operation; group messages are ignored.
@@ -103,7 +105,8 @@ Paste the generated value directly into Render's Environment settings. Never put
 - TMDB supplies movie search results, genres, release date, runtime, original language, rating, and poster.
 - OMDb is optional and supplies additional IMDb-related metadata and fallback values.
 - TV series, weekly trending titles, cast/crew, trailers, and similar-title lists are retrieved from TMDB.
-- The displayed rating is converted to a 5-point scale. For example, a provider rating of 4.0/10 is displayed as 2.0/5.
+- The displayed rating is converted to a 5-point scale.
+- User settings are kept in the active bot session and return to defaults after a service restart. For example, a provider rating of 4.0/10 is displayed as 2.0/5.
 - If OMDb is not configured or does not find a match, the bot continues using TMDB data.
 
 ## Commands
@@ -112,6 +115,7 @@ Paste the generated value directly into Render's Environment settings. Never put
 - /help - Show instructions
 - /trending - Discover this week's trending movies
 - /tv <series name> - Search TV series
+- /settings - Customize artwork and search results
 - /credits - Show API credits
 
 ## Security
