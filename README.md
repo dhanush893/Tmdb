@@ -14,13 +14,15 @@ Example reply:
 ## Features
 
 - Private-chat-only: group messages are ignored.
-- Search movies by title.
-- Select the correct result when several movies have similar names.
-- Shows a movie poster when TMDB provides one.
-- Displays title, genres, release year, rating, language, and runtime.
-- Uses TMDB for movie metadata and OMDb for optional IMDb-related data.
-- Converts 10-point provider ratings to the requested 5-point display.
-- Keeps API keys in a local .env file that is excluded from Git.
+- Search movies by title and select from interactive results.
+- Search TV series with /tv.
+- Discover this week's trending movies with /trending.
+- Movie and series posters, ratings, genres, release information, and story summaries.
+- Interactive Cast & Crew, Trailer, and Similar Titles buttons.
+- Optional IMDb rating data through OMDb.
+- Converts 10-point provider ratings to a 5-point display.
+- Private-chat-only operation; group messages are ignored.
+- Keeps API keys in environment variables or a local .env file excluded from Git.
 
 ## Requirements
 
@@ -101,6 +103,7 @@ Paste the generated value directly into Render's Environment settings. Never put
 
 - TMDB supplies movie search results, genres, release date, runtime, original language, rating, and poster.
 - OMDb is optional and supplies additional IMDb-related metadata and fallback values.
+- TV series, weekly trending titles, cast/crew, trailers, and similar-title lists are retrieved from TMDB.
 - The displayed rating is converted to a 5-point scale. For example, a provider rating of 4.0/10 is displayed as 2.0/5.
 - If OMDb is not configured or does not find a match, the bot continues using TMDB data.
 
@@ -108,7 +111,9 @@ Paste the generated value directly into Render's Environment settings. Never put
 
 - /start - Start the bot
 - /help - Show instructions
-- /credits - Show API credits
+- /trending - Discover this week's trending movies
+    /tv <series name> - Search TV series
+    /credits - Show API credits
 
 ## Security
 
