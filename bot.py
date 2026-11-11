@@ -24,6 +24,7 @@ OMDB_API_KEY = os.getenv("OMDB_API_KEY", "").strip()
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 OMDB_BASE_URL = "https://www.omdbapi.com/"
 TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
+TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w780"
 HTTP_TIMEOUT = httpx.Timeout(20.0, connect=10.0)
 
 LANGUAGE_NAMES = {
@@ -138,10 +139,12 @@ def tv_keyboard(tv_id: int) -> InlineKeyboardMarkup:
 
 
 async def send_poster(message: Any, poster_path: str | None, caption: str,
-                      keyboard: InlineKeyboardMarkup | None = None) -> None:
+                      keyboard: InlineKeyboardMarkup | None = None,
+                      artwork: str = "backdrop") -> None:
     if poster_path:
+        image_base = TMDB_BACKDROP_BASE if artwork == "backdrop" else TMDB_IMAGE_BASE
         await message.reply_photo(
-            photo=f"{TMDB_IMAGE_BASE}{poster_path}",
+            photo=f"{image_base}{poster_path}",
             caption=caption,
             parse_mode=ParseMode.HTML,
             reply_markup=keyboard,
@@ -222,11 +225,16 @@ def build_tv_message(details: dict[str, Any]) -> str:
     )
 
 
-async def send_movie_result(message: Any, movie_id: int) -> None:
+async def send_movie_result(message: Any, movie_id: int, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         details, omdb = await load_movie(movie_id)
-        await send_poster(message, details.get("poster_path"),
-                          build_movie_message(details, omdb), movie_keyboard(movie_id))
+        artwork = context.user_data.get("settings", {}).get("artwork", "backdrop")
+        image_path = details.get("backdrop_path") if artwork == "backdrop" else details.get("poster_path")
+        if not image_path:
+            image_path = details.get("poster_path") or details.get("backdrop_path")
+        actual_artwork = "backdrop" if image_path == details.get("backdrop_path") else "poster"
+        await send_poster(message, image_path, build_movie_message(details, omdb),
+                          movie_keyboard(movie_id), actual_artwork)
     except MovieAPIError as exc:
         await message.reply_text(f"⚠️ {escape(str(exc))}")
     except Exception:
@@ -234,11 +242,16 @@ async def send_movie_result(message: Any, movie_id: int) -> None:
         await message.reply_text("⚠️ Could not load this title. Please try again.")
 
 
-async def send_tv_result(message: Any, tv_id: int) -> None:
+async def send_tv_result(message: Any, tv_id: int, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         details = await tmdb_get(f"tv/{tv_id}", language="en-US")
-        await send_poster(message, details.get("poster_path"),
-                          build_tv_message(details), tv_keyboard(tv_id))
+        artwork = context.user_data.get("settings", {}).get("artwork", "backdrop")
+        image_path = details.get("backdrop_path") if artwork == "backdrop" else details.get("poster_path")
+        if not image_path:
+            image_path = details.get("poster_path") or details.get("backdrop_path")
+        actual_artwork = "backdrop" if image_path == details.get("backdrop_path") else "poster"
+        await send_poster(message, image_path, build_tv_message(details),
+                          tv_keyboard(tv_id), actual_artwork)
     except MovieAPIError as exc:
         await message.reply_text(f"⚠️ {escape(str(exc))}")
     except Exception:
@@ -445,10 +458,10 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         media_id = int(raw_id)
         if action == "movie":
             await query.message.reply_text("⏳ Loading movie information...")
-            await send_movie_result(query.message, media_id)
+            await send_movie_result(query.message, media_id, context)
         elif action == "tv":
             await query.message.reply_text("⏳ Loading series information...")
-            await send_tv_result(query.message, media_id)
+            await send_tv_result(query.message, media_id, context)
         elif action in ("cast", "casttv"):
             await show_cast(query.message, "movie" if action == "cast" else "tv", media_id)
         elif action in ("trailer", "trailertv"):
