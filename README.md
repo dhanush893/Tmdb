@@ -36,7 +36,7 @@ Important: keep this project under Termux's home directory ($HOME). Do not creat
 Install the tools:
 
     pkg update && pkg upgrade -y
-    pkg install python git -y
+    pkg install python git nano -y
 
 Clone the repository into Termux home:
 
@@ -92,7 +92,7 @@ Open your bot in Telegram, press Start, and send a movie title.
 
 ## Credits and attribution
 
-Movie metadata and posters are provided by TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB. Review TMDB's current FAQ and attribution requirements at https://developer.themoviedb.org/docs/faq and use an approved TMDB logo to identify API use in the bot's credits.
+Movie metadata and posters are provided by TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB. Review TMDB's current FAQ and attribution requirements at https://developer.themoviedb.org/docs/faq and use an approved TMDB logo from https://www.themoviedb.org/about/logos-attribution to identify API use in the bot's credits.
 
 Additional IMDb-related data may be provided by OMDb: https://www.omdbapi.com/.
 
