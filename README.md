@@ -1,4 +1,4 @@
-# TMDB Movie Info Bot
+# DHANU CINEMA — Telegram Movie & Series Bot
 
 A private-chat-only Telegram bot that searches movies and returns clean, compact information in the requested format.
 
@@ -13,7 +13,6 @@ Example reply:
 
 ## Features
 
-- Private-chat-only: group messages are ignored.
 - Search movies by title and select from interactive results.
 - Search TV series with /tv.
 - Discover this week's trending movies with /trending.
@@ -112,8 +111,8 @@ Paste the generated value directly into Render's Environment settings. Never put
 - /start - Start the bot
 - /help - Show instructions
 - /trending - Discover this week's trending movies
-    /tv <series name> - Search TV series
-    /credits - Show API credits
+- /tv <series name> - Search TV series
+- /credits - Show API credits
 
 ## Security
 
