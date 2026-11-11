@@ -105,7 +105,7 @@ def rating_5(value: Any) -> str:
     try:
         number = float(value)
         if number > 0:
-            return f"{number / 2:.1f} / 5"
+            return f"{number / 2:.1f}"
     except (TypeError, ValueError):
         pass
     return "N/A"
@@ -381,9 +381,9 @@ async def show_cast(message: Any, media_type: str, media_id: int) -> None:
     writers = [x.get("name") for x in crew if x.get("department") == "Writing"]
     lines = [f"🎭 <b>CAST & CREW</b>"]
     if directors:
-        lines.append("🎬 Director: " + escape(", ".join(dict.fromkeys(directors[:3])))
+        lines.append("🎬 Director: " + escape(", ".join(dict.fromkeys(directors[:3]))))
     if writers:
-        lines.append("✍️ Writer: " + escape(", ".join(dict.fromkeys(writers[:3])))
+        lines.append("✍️ Writer: " + escape(", ".join(dict.fromkeys(writers[:3]))))
     if cast:
         lines.append("\n⭐ <b>MAIN CAST</b>")
         for person in cast[:12]:
