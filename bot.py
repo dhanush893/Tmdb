@@ -259,7 +259,7 @@ async def send_tv_result(message: Any, tv_id: int, context: ContextTypes.DEFAULT
         await message.reply_text("⚠️ Could not load this series. Please try again.")
 
 
-async def search_titles(message: Any, query: str, media_type: str = "movie") -> None:
+async def search_titles(message: Any, query: str, media_type: str = "movie", context: ContextTypes.DEFAULT_TYPE | None = None) -> None:
     if not query or len(query) > 100:
         await message.reply_text("Send a title between 1 and 100 characters.")
         return
@@ -273,7 +273,8 @@ async def search_titles(message: Any, query: str, media_type: str = "movie") -> 
                                     parse_mode=ParseMode.HTML)
             return
         keyboard = []
-        for item in items[:8]:
+        result_limit = int(context.user_data.get("settings", {}).get("results", 8)) if context else 8
+        for item in items[:result_limit]:
             item_id = item.get("id")
             if not item_id:
                 continue
@@ -297,6 +298,61 @@ async def search_titles(message: Any, query: str, media_type: str = "movie") -> 
         logger.exception("Title search failed")
         await waiting.edit_text("⚠️ Search failed. Please try again.")
 
+
+def settings_keyboard(context: ContextTypes.DEFAULT_TYPE) -> InlineKeyboardMarkup:
+    settings = context.user_data.setdefault("settings", {})
+    artwork = settings.get("artwork", "backdrop")
+    count = int(settings.get("results", 8))
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton(("✅ " if artwork == "backdrop" else "") + "🎞 Cinematic backdrop", callback_data="setting:artwork:backdrop")],
+        [InlineKeyboardButton(("✅ " if artwork == "poster" else "") + "🖼 Original poster", callback_data="setting:artwork:poster")],
+        [
+            InlineKeyboardButton(("✅ " if count == 5 else "") + "5 results", callback_data="setting:results:5"),
+            InlineKeyboardButton(("✅ " if count == 8 else "") + "8 results", callback_data="setting:results:8"),
+            InlineKeyboardButton(("✅ " if count == 10 else "") + "10 results", callback_data="setting:results:10"),
+        ],
+    ])
+
+
+async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not update.effective_chat or update.effective_chat.type != ChatType.PRIVATE:
+        return
+    settings = context.user_data.setdefault("settings", {})
+    settings.setdefault("artwork", "backdrop")
+    settings.setdefault("results", 8)
+    await update.effective_message.reply_text(
+        "⚙️ <b>DHANU CINEMA SETTINGS</b>\n\n"
+        "Choose your preferred artwork and search display.\n"
+        "🎞 Cinematic backdrop: wide landscape image like your example.\n"
+        "🖼 Original poster: vertical movie poster.\n"
+        "🔢 Choose how many search results to show.",
+        parse_mode=ParseMode.HTML, reply_markup=settings_keyboard(context),
+    )
+
+
+async def settings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    if not query or not query.message or query.message.chat.type != ChatType.PRIVATE:
+        if query:
+            await query.answer()
+        return
+    parts = (query.data or "").split(":")
+    if len(parts) != 3:
+        await query.answer()
+        return
+    _, key, value = parts
+    settings = context.user_data.setdefault("settings", {})
+    if key == "artwork" and value in ("backdrop", "poster"):
+        settings["artwork"] = value
+        label = "Cinematic backdrop" if value == "backdrop" else "Original poster"
+    elif key == "results" and value in ("5", "8", "10"):
+        settings["results"] = int(value)
+        label = value + " search results"
+    else:
+        await query.answer("Unknown setting.")
+        return
+    await query.answer("Updated: " + label)
+    await query.edit_message_reply_markup(reply_markup=settings_keyboard(context))
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.effective_chat or update.effective_chat.type != ChatType.PRIVATE:
@@ -326,7 +382,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "<b>Commands</b>\n"
         "/start — Start the bot\n/help — Show help\n"
         "/trending — Trending movies\n/tv — Search TV series\n"
-        "/credits — API credits",
+        "/settings — Customize bot settings\n/credits — API credits",
         parse_mode=ParseMode.HTML,
     )
 
@@ -350,7 +406,7 @@ async def tv_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     if not query:
         await update.effective_message.reply_text("Usage: /tv <series name>")
         return
-    await search_titles(update.effective_message, query, "tv")
+    await search_titles(update.effective_message, query, "tv", context)
 
 
 async def trending_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -360,7 +416,7 @@ async def trending_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     try:
         result = await tmdb_get("trending/movie/week", language="en-US")
         keyboard = []
-        for item in (result.get("results") or [])[:10]:
+        for item in (result.get("results") or [])[:int(context.user_data.get("settings", {}).get("results", 8))]:
             title = item.get("title") or "Untitled"
             year = get_year(item.get("release_date"))
             score = item.get("vote_average")
@@ -383,7 +439,7 @@ async def trending_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 async def search_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.effective_chat or update.effective_chat.type != ChatType.PRIVATE:
         return
-    await search_titles(update.effective_message, (update.effective_message.text or "").strip())
+    await search_titles(update.effective_message, (update.effective_message.text or "").strip(), context=context)
 
 
 async def show_cast(message: Any, media_type: str, media_id: int) -> None:
@@ -481,6 +537,7 @@ async def post_init(application: Application) -> None:
         BotCommand("help", "Show instructions"),
         BotCommand("trending", "Discover trending movies"),
         BotCommand("tv", "Search TV series"),
+        BotCommand("settings", "Customize artwork and results"),
         BotCommand("credits", "View API credits"),
     ])
 
@@ -502,6 +559,8 @@ def main() -> None:
     application.add_handler(CommandHandler("credits", credits_command, filters=private))
     application.add_handler(CommandHandler("trending", trending_command, filters=private))
     application.add_handler(CommandHandler("tv", tv_command, filters=private))
+    application.add_handler(CommandHandler("settings", settings_command, filters=private))
+    application.add_handler(CallbackQueryHandler(settings_callback, pattern=r"^setting:(artwork|results):(backdrop|poster|5|8|10)$"))
     application.add_handler(CallbackQueryHandler(
         callback_handler,
         pattern=r"^(movie|tv|cast|casttv|trailer|trailertv|similar|similartv):\d+$",
