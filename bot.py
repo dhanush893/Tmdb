@@ -418,8 +418,31 @@ def main() -> None:
     )
     application.add_error_handler(error_handler)
 
-    logger.info("TMDB Movie Info Bot is running (private chats only).")
-    application.run_polling(drop_pending_updates=True)
+    mode = os.getenv("TELEGRAM_MODE", "polling").strip().lower()
+    if mode == "webhook":
+        # Render Web Service deployment: Telegram sends updates to this public HTTPS endpoint.
+        external_url = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
+        webhook_secret = os.getenv("TELEGRAM_WEBHOOK_SECRET", "").strip()
+        port = int(os.getenv("PORT", "10000"))
+        webhook_path = "telegram-webhook"
+
+        if not external_url:
+            raise SystemExit("RENDER_EXTERNAL_URL is missing; configure this as a Render Web Service.")
+        if not webhook_secret:
+            raise SystemExit("TELEGRAM_WEBHOOK_SECRET is missing; set it in Render environment variables.")
+
+        logger.info("Starting Telegram webhook on port %s (private chats only).", port)
+        application.run_webhook(
+            listen="0.0.0.0",
+            port=port,
+            url_path=webhook_path,
+            webhook_url=f"{external_url}/{webhook_path}",
+            secret_token=webhook_secret,
+            drop_pending_updates=True,
+        )
+    else:
+        logger.info("TMDB Movie Info Bot is running in polling mode (private chats only).")
+        application.run_polling(drop_pending_updates=True)
 
 
 if __name__ == "__main__":
