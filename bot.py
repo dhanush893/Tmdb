@@ -191,14 +191,14 @@ def build_movie_message(details: dict[str, Any], omdb: dict[str, Any] | None) ->
     else:
         rating_line = "〽️ ʀᴀᴛɪɴɢ - N/A"
     tagline = details.get("tagline")
-    tagline_line = f"\\n💬 {escape(str(tagline))}" if tagline else ""
+    tagline_line = f"\n💬 <i>{escape(str(tagline))}</i>" if tagline else ""
     return (
-        f"🎬 <b>{escape(str(title))}</b>{tagline_line}\\n\\n"
-        f"🎭 ɢᴇɴʀᴇs - {escape(str(genres))}\\n"
-        f"📆 ʏᴇᴀʀ - {escape(str(year))}\\n"
-        f"{rating_line}\\n"
-        f"🔉 ʟᴀɴɢᴜᴀɢᴇ - {escape(str(language))}\\n"
-        f"🔂 ʀᴜɴ ᴛɪᴍᴇ - {escape(format_runtime(runtime))}\\n\\n"
+        f"🎬 <b>{escape(str(title))}</b>{tagline_line}\n\n"
+        f"🎭 ɢᴇɴʀᴇs - {escape(str(genres))}\n"
+        f"📆 ʏᴇᴀʀ - {escape(str(year))}\n"
+        f"{rating_line}\n"
+        f"🔉 ʟᴀɴɢᴜᴀɢᴇ - {escape(str(language))}\n"
+        f"🔂 ʀᴜɴ ᴛɪᴍᴇ - {escape(format_runtime(runtime))}\n\n"
         f"{WATERMARK}"
     )
 
