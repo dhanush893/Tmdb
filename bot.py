@@ -182,26 +182,25 @@ def build_movie_message(details: dict[str, Any], omdb: dict[str, Any] | None) ->
     language = (omdb.get("Language") if omdb and omdb.get("Language") != "N/A"
                 else language_name(details.get("original_language")))
     runtime = get_runtime_minutes(details.get("runtime"), omdb.get("Runtime") if omdb else None)
-    rating = rating_5(details.get("vote_average"))
     imdb_rating = omdb.get("imdbRating") if omdb else None
-    imdb_line = f"\n⭐ ɪᴍᴅʙ - {escape(str(imdb_rating))}/10" if imdb_rating and imdb_rating != "N/A" else ""
+    tmdb_rating = details.get("vote_average")
+    if imdb_rating and imdb_rating != "N/A":
+        rating_line = f"〽️ ʀᴀᴛɪɴɢ - {escape(str(imdb_rating))} / 10 (IMDb)"
+    elif tmdb_rating:
+        rating_line = f"〽️ ʀᴀᴛɪɴɢ - {escape(str(round(float(tmdb_rating), 1)))} / 10 (TMDB)"
+    else:
+        rating_line = "〽️ ʀᴀᴛɪɴɢ - N/A"
     tagline = details.get("tagline")
-    tagline_line = f"\n💬 <i>{escape(str(tagline))}</i>" if tagline else ""
-    overview = details.get("overview")
-    overview_line = f"\n\n📖 <b>STORY</b>\n{escape(str(overview)[:650])}" if overview else ""
+    tagline_line = f"\\n💬 {escape(str(tagline))}" if tagline else ""
     return (
-        f"🎬 <b>{escape(str(title))}</b>{tagline_line}\n\n"
-        f"🎭 ɢᴇɴʀᴇs - {escape(str(genres))}\n"
-        f"📆 ʏᴇᴀʀ - {escape(str(year))}\n"
-        f"〽️ ʀᴀᴛɪɴɢ - {escape(rating)} / 5" if rating != "N/A" else
-        f"🎬 <b>{escape(str(title))}</b>{tagline_line}\n\n"
-        f"🎭 ɢᴇɴʀᴇs - {escape(str(genres))}\n📆 ʏᴇᴀʀ - {escape(str(year))}\n〽️ ʀᴀᴛɪɴɢ - N/A"
-    ) + (
-        f"\n🔉 ʟᴀɴɢᴜᴀɢᴇ - {escape(str(language))}\n"
-        f"🔂 ʀᴜɴ ᴛɪᴍᴇ - {escape(format_runtime(runtime))}"
-        f"{imdb_line}{overview_line}\n\n{WATERMARK}"
+        f"🎬 <b>{escape(str(title))}</b>{tagline_line}\\n\\n"
+        f"🎭 ɢᴇɴʀᴇs - {escape(str(genres))}\\n"
+        f"📆 ʏᴇᴀʀ - {escape(str(year))}\\n"
+        f"{rating_line}\\n"
+        f"🔉 ʟᴀɴɢᴜᴀɢᴇ - {escape(str(language))}\\n"
+        f"🔂 ʀᴜɴ ᴛɪᴍᴇ - {escape(format_runtime(runtime))}\\n\\n"
+        f"{WATERMARK}"
     )
-
 
 def build_tv_message(details: dict[str, Any]) -> str:
     title = details.get("name") or details.get("original_name") or "Unknown"
@@ -233,15 +232,20 @@ async def send_movie_result(message: Any, movie_id: int, context: ContextTypes.D
         if not image_path:
             image_path = details.get("poster_path") or details.get("backdrop_path")
         actual_artwork = "backdrop" if image_path == details.get("backdrop_path") else "poster"
-        await message.reply_text(
-            build_movie_message(details, omdb),
-            parse_mode=ParseMode.HTML,
-            reply_markup=movie_keyboard(movie_id),
-            disable_web_page_preview=True,
-        )
+        caption = build_movie_message(details, omdb)
         if image_path:
             image_base = TMDB_BACKDROP_BASE if actual_artwork == "backdrop" else TMDB_IMAGE_BASE
-            await message.reply_photo(photo=f"{image_base}{image_path}")
+            await message.reply_photo(
+                photo=f"{image_base}{image_path}",
+                caption=caption,
+                parse_mode=ParseMode.HTML,
+                reply_markup=movie_keyboard(movie_id),
+            )
+        else:
+            await message.reply_text(
+                caption, parse_mode=ParseMode.HTML, reply_markup=movie_keyboard(movie_id),
+                disable_web_page_preview=True,
+            )
     except MovieAPIError as exc:
         await message.reply_text(f"⚠️ {escape(str(exc))}")
     except Exception:
@@ -257,15 +261,20 @@ async def send_tv_result(message: Any, tv_id: int, context: ContextTypes.DEFAULT
         if not image_path:
             image_path = details.get("poster_path") or details.get("backdrop_path")
         actual_artwork = "backdrop" if image_path == details.get("backdrop_path") else "poster"
-        await message.reply_text(
-            build_tv_message(details),
-            parse_mode=ParseMode.HTML,
-            reply_markup=tv_keyboard(tv_id),
-            disable_web_page_preview=True,
-        )
+        caption = build_tv_message(details)
         if image_path:
             image_base = TMDB_BACKDROP_BASE if actual_artwork == "backdrop" else TMDB_IMAGE_BASE
-            await message.reply_photo(photo=f"{image_base}{image_path}")
+            await message.reply_photo(
+                photo=f"{image_base}{image_path}",
+                caption=caption,
+                parse_mode=ParseMode.HTML,
+                reply_markup=tv_keyboard(tv_id),
+            )
+        else:
+            await message.reply_text(
+                caption, parse_mode=ParseMode.HTML, reply_markup=tv_keyboard(tv_id),
+                disable_web_page_preview=True,
+            )
     except MovieAPIError as exc:
         await message.reply_text(f"⚠️ {escape(str(exc))}")
     except Exception:
