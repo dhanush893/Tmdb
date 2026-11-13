@@ -199,8 +199,7 @@ def build_movie_message(details: dict[str, Any], omdb: dict[str, Any] | None) ->
     ) + (
         f"\n🔉 ʟᴀɴɢᴜᴀɢᴇ - {escape(str(language))}\n"
         f"🔂 ʀᴜɴ ᴛɪᴍᴇ - {escape(format_runtime(runtime))}"
-        f"{imdb_line}{overview_line}\n\n<i>Data: TMDB"
-        f"{' + OMDb' if omdb else ''}</i>\n\n{WATERMARK}"
+        f"{imdb_line}{overview_line}\n\n{WATERMARK}"
     )
 
 
@@ -222,7 +221,7 @@ def build_tv_message(details: dict[str, Any]) -> str:
         f"📚 sᴇᴀsᴏɴs - {details.get('number_of_seasons', 'N/A')} | "
         f"Episodes - {details.get('number_of_episodes', 'N/A')}\n"
         f"📡 sᴛᴀᴛᴜs - {escape(str(details.get('status') or 'N/A'))}\n"
-        f"🏢 ɴᴇᴛᴡᴏʀᴋ - {escape(networks)}{story}\n\n<i>Data: TMDB</i>\n\n{WATERMARK}"
+        f"🏢 ɴᴇᴛᴡᴏʀᴋ - {escape(networks)}{story}\n\n{WATERMARK}"
     )
 
 
@@ -234,8 +233,15 @@ async def send_movie_result(message: Any, movie_id: int, context: ContextTypes.D
         if not image_path:
             image_path = details.get("poster_path") or details.get("backdrop_path")
         actual_artwork = "backdrop" if image_path == details.get("backdrop_path") else "poster"
-        await send_poster(message, image_path, build_movie_message(details, omdb),
-                          movie_keyboard(movie_id), actual_artwork)
+        await message.reply_text(
+            build_movie_message(details, omdb),
+            parse_mode=ParseMode.HTML,
+            reply_markup=movie_keyboard(movie_id),
+            disable_web_page_preview=True,
+        )
+        if image_path:
+            image_base = TMDB_BACKDROP_BASE if actual_artwork == "backdrop" else TMDB_IMAGE_BASE
+            await message.reply_photo(photo=f"{image_base}{image_path}")
     except MovieAPIError as exc:
         await message.reply_text(f"⚠️ {escape(str(exc))}")
     except Exception:
@@ -251,8 +257,15 @@ async def send_tv_result(message: Any, tv_id: int, context: ContextTypes.DEFAULT
         if not image_path:
             image_path = details.get("poster_path") or details.get("backdrop_path")
         actual_artwork = "backdrop" if image_path == details.get("backdrop_path") else "poster"
-        await send_poster(message, image_path, build_tv_message(details),
-                          tv_keyboard(tv_id), actual_artwork)
+        await message.reply_text(
+            build_tv_message(details),
+            parse_mode=ParseMode.HTML,
+            reply_markup=tv_keyboard(tv_id),
+            disable_web_page_preview=True,
+        )
+        if image_path:
+            image_base = TMDB_BACKDROP_BASE if actual_artwork == "backdrop" else TMDB_IMAGE_BASE
+            await message.reply_photo(photo=f"{image_base}{image_path}")
     except MovieAPIError as exc:
         await message.reply_text(f"⚠️ {escape(str(exc))}")
     except Exception:
