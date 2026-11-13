@@ -26,6 +26,7 @@ OMDB_BASE_URL = "https://www.omdbapi.com/"
 TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w780"
 HTTP_TIMEOUT = httpx.Timeout(20.0, connect=10.0)
+WATERMARK = '⚜️ <b>ᴘᴏᴡᴇʀᴇᴅ ʙʏ:</b> <a href="https://t.me/SD_Movie_Adda">@SD_Movie_Adda</a>'
 
 LANGUAGE_NAMES = {
     "kn": "Kannada", "hi": "Hindi", "ta": "Tamil", "te": "Telugu",
@@ -199,7 +200,7 @@ def build_movie_message(details: dict[str, Any], omdb: dict[str, Any] | None) ->
         f"\n🔉 ʟᴀɴɢᴜᴀɢᴇ - {escape(str(language))}\n"
         f"🔂 ʀᴜɴ ᴛɪᴍᴇ - {escape(format_runtime(runtime))}"
         f"{imdb_line}{overview_line}\n\n<i>Data: TMDB"
-        f"{' + OMDb' if omdb else ''}</i>"
+        f"{' + OMDb' if omdb else ''}</i>\n\n{WATERMARK}"
     )
 
 
@@ -221,7 +222,7 @@ def build_tv_message(details: dict[str, Any]) -> str:
         f"📚 sᴇᴀsᴏɴs - {details.get('number_of_seasons', 'N/A')} | "
         f"Episodes - {details.get('number_of_episodes', 'N/A')}\n"
         f"📡 sᴛᴀᴛᴜs - {escape(str(details.get('status') or 'N/A'))}\n"
-        f"🏢 ɴᴇᴛᴡᴏʀᴋ - {escape(networks)}{story}\n\n<i>Data: TMDB</i>"
+        f"🏢 ɴᴇᴛᴡᴏʀᴋ - {escape(networks)}{story}\n\n<i>Data: TMDB</i>\n\n{WATERMARK}"
     )
 
 
